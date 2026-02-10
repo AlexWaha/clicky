@@ -25,6 +25,8 @@ go build -ldflags="-H windowsgui"
 
 ## 🎨 Design
 
+![Design](img.png)
+
 | Element | Color |
 |---------|-------|
 | Background | `#2B2B2B` |
