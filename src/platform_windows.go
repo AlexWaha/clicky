@@ -69,7 +69,10 @@ const (
 	DT_CENTER     = 0x0001
 	DT_VCENTER    = 0x0004
 	DT_SINGLELINE = 0x0020
+	DT_RIGHT      = 0x0002
+	DT_BOTTOM     = 0x0008
 	FW_SEMIBOLD   = 600
+	FW_NORMAL     = 400
 
 	BTN_ID  = 1
 	HK_QUIT = 1
@@ -184,6 +187,7 @@ var (
 	hWndBtn  syscall.Handle
 
 	hFont       syscall.Handle
+	hFontHint   syscall.Handle
 	hBrushBg    syscall.Handle // #2B2B2B dark background
 	hBrushBlue  syscall.Handle // #0078D4 button idle
 	hBrushGreen syscall.Handle // #107C10 button active
@@ -215,6 +219,20 @@ func createCustomFont() syscall.Handle {
 		uintptr(uint32(0xFFFFFFEE)), // -18 (height)
 		0, 0, 0,
 		FW_SEMIBOLD,
+		0, 0, 0, // italic, underline, strikeout
+		1,        // DEFAULT_CHARSET
+		0, 0, 4,  // out, clip, ANTIALIASED_QUALITY
+		0,
+		uintptr(unsafe.Pointer(utf16("Segoe UI"))),
+	)
+	return syscall.Handle(h)
+}
+
+func createHintFont() syscall.Handle {
+	h, _, _ := pCreateFontW.Call(
+		uintptr(uint32(0xFFFFFFF4)), // -12 (height)
+		0, 0, 0,
+		FW_NORMAL,
 		0, 0, 0, // italic, underline, strikeout
 		1,        // DEFAULT_CHARSET
 		0, 0, 4,  // out, clip, ANTIALIASED_QUALITY
@@ -293,6 +311,19 @@ func wndProc(hwnd syscall.Handle, msg uint32, wParam, lParam uintptr) uintptr {
 		var rc RECT
 		pGetClientRect.Call(uintptr(hwnd), uintptr(unsafe.Pointer(&rc)))
 		pFillRect.Call(wParam, uintptr(unsafe.Pointer(&rc)), uintptr(hBrushBg))
+		// Draw hint text in bottom-right corner
+		pSetBkMode.Call(wParam, TRANSPARENT)
+		pSetTextColor.Call(wParam, rgb(0x70, 0x70, 0x70))
+		pSelectObject.Call(wParam, uintptr(hFontHint))
+		hintRC := RECT{Left: 0, Top: 0, Right: rc.Right - 12, Bottom: rc.Bottom - 12}
+		hintText := utf16("To close the App press Ctrl+Q")
+		pDrawTextW.Call(
+			wParam,
+			uintptr(unsafe.Pointer(hintText)),
+			uintptr(uint32(0xFFFFFFFF)),
+			uintptr(unsafe.Pointer(&hintRC)),
+			DT_RIGHT|DT_BOTTOM|DT_SINGLELINE,
+		)
 		return 1
 
 	case WM_CTLCOLORBTN:
@@ -341,6 +372,7 @@ func wndProc(hwnd syscall.Handle, msg uint32, wParam, lParam uintptr) uintptr {
 		pUnregisterHotKey.Call(uintptr(hWndMain), HK_QUIT)
 		pSetThreadExecutionState.Call(ES_CONTINUOUS)
 		pDeleteObject.Call(uintptr(hFont))
+		pDeleteObject.Call(uintptr(hFontHint))
 		pDeleteObject.Call(uintptr(hBrushBg))
 		pDeleteObject.Call(uintptr(hBrushBlue))
 		pDeleteObject.Call(uintptr(hBrushGreen))
@@ -359,6 +391,7 @@ func platformRun() {
 
 	// Create GDI resources
 	hFont = createCustomFont()
+	hFontHint = createHintFont()
 	hBrushBg = winCreateSolidBrush(rgb(0x2B, 0x2B, 0x2B))
 	hBrushBlue = winCreateSolidBrush(rgb(0x00, 0x78, 0xD4))
 	hBrushGreen = winCreateSolidBrush(rgb(0x10, 0x7C, 0x10))
@@ -404,7 +437,7 @@ func platformRun() {
 	hwnd, _, _ := pCreateWindowExW.Call(
 		uintptr(exStyle),
 		uintptr(unsafe.Pointer(className)),
-		uintptr(unsafe.Pointer(utf16("KeepAlive (Ctrl+Q = quit)"))),
+		uintptr(unsafe.Pointer(utf16("Clicky"))),
 		uintptr(style|WS_VISIBLE),
 		uintptr(startX), uintptr(startY),
 		uintptr(winW), uintptr(winH),
