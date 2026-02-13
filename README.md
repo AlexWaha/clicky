@@ -13,42 +13,45 @@ Tiny cross-platform utility that keeps your PC/Mac awake by simulating mouse cli
 
 ## Usage
 
-1. Launch `clicky` (or `clicky.exe` on Windows)
+1. Launch **Clicky.app** (macOS) or `clicky.exe` (Windows)
 2. Click the **Alive** button — it turns green (**Active**)
 3. The cursor moves to button corners with random delays, simulating clicks
-4. Press **Ctrl+Q** / **Cmd+Q** to quit
+4. Click **X** or press **Cmd+Q** / **Ctrl+Q** to quit
 
 ## Build
 
-**Windows:**
+**macOS** (creates `dist/Clicky.app`):
 
 ```bash
-cd src
-go build -ldflags="-H windowsgui" -o ../dist/clicky.exe
+make app
 ```
 
-**macOS:**
+Drag `dist/Clicky.app` to **Applications** to install.
+
+**Windows** (cross-compile from macOS):
 
 ```bash
-cd src
-CC=clang go build -o ../dist/clicky
+make windows
 ```
 
 ## Project Structure
 
 ```
+Makefile                     — Build automation (make app / make windows / make clean)
 src/
-  main.go                  — Entry point
-  app.go                   — Shared logic: Bezier curves, random delay, aliveLoop
-  platform_windows.go      — Win32 GUI + mouse + sleep prevention
-  platform_macos.go        — macOS: Go CGo bridge (calls into objc_darwin)
-  objc_darwin.h            — C header for Objective-C functions
-  objc_darwin.m            — Objective-C implementation (Cocoa + CoreGraphics + IOKit)
-  icon.go                  — Embedded app icon (icon.png)
-  icon.png                 — App icon
-  rsrc_windows_amd64.syso  — Windows resource (embedded icon for .exe)
+  main.go                    — Entry point
+  app.go                     — Shared logic: Bezier curves, random delay, aliveLoop
+  platform_windows.go        — Win32 GUI + mouse + sleep prevention
+  platform_macos.go          — macOS: Go CGo bridge (calls into objc_darwin)
+  objc_darwin.h              — C header for Objective-C functions
+  objc_darwin.m              — Objective-C implementation (Cocoa + CoreGraphics + IOKit)
+  icon.go                    — Embedded app icon (icon.png)
+  icon.png                   — App icon
+  Info.plist                 — macOS app bundle metadata
+  rsrc_windows_amd64.syso    — Windows resource (embedded icon for .exe)
   go.mod
-dist/                      — Build output (gitignored)
+dist/                        — Build output (gitignored)
+  Clicky.app/                — macOS app bundle
 ```
 
 ## Design
@@ -66,4 +69,16 @@ dist/                      — Build output (gitignored)
 ## Requirements
 
 - **Windows:** Windows 10+, Go 1.21+, no CGO
-- **macOS:** macOS 10.14+, Go 1.21+, Xcode CLT (for cgo), Accessibility permission for mouse control
+- **macOS:** macOS 10.14+, Go 1.21+, Xcode CLT (for building)
+
+### macOS Accessibility Permission
+
+Clicky uses `CGEventPost` and `CGWarpMouseCursorPosition` to simulate mouse movement and clicks. macOS requires **Accessibility** permission for this.
+
+On first launch, macOS will prompt you to grant access. If it doesn't, or if clicks aren't working:
+
+1. Open **System Settings** > **Privacy & Security** > **Accessibility**
+2. Click **+** and add **Clicky.app** (or toggle it on if already listed)
+3. Restart the app
+
+Without this permission the app will launch and the button will work, but cursor movement and simulated clicks will be silently blocked by the system.
