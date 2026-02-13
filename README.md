@@ -1,29 +1,55 @@
-# 🖱️ Clicky — KeepAlive
+# Clicky — KeepAlive
 
-> Tiny Windows utility that keeps your PC awake by simulating mouse clicks.
+Tiny cross-platform utility that keeps your PC/Mac awake by simulating mouse clicks.
 
-## ✨ Features
+## Features
 
-- 🟢 **Auto-clicker** — smooth cursor movement + periodic clicks
-- 🔒 **Prevents sleep** — blocks display & system idle timeout
-- 📌 **Always on top** — small 300×300 window stays visible
-- ⌨️ **Ctrl+Q** — global hotkey to quit instantly
-- 🎨 **Dark theme** — flat UI, no external dependencies
+- **Auto-clicker** — cursor moves along Bezier curves with random offset + periodic clicks
+- **Prevents sleep** — blocks display & system idle timeout
+- **Always on top** — small 300x300 window stays visible
+- **Random delay** — 1-5 sec between movement cycles
+- **Dark theme** — flat UI, no external dependencies
+- **Hotkey** — Ctrl+Q (Windows) / Cmd+Q (macOS) to quit
 
-## 🚀 Usage
+## Usage
 
-1. Launch `clicky.exe`
-2. Click the **Alive** button — it turns green (**● Active**)
-3. The cursor moves to button corners every ~4 seconds, simulating clicks
-4. Press **Ctrl+Q** anywhere to quit
+1. Launch `clicky` (or `clicky.exe` on Windows)
+2. Click the **Alive** button — it turns green (**Active**)
+3. The cursor moves to button corners with random delays, simulating clicks
+4. Press **Ctrl+Q** / **Cmd+Q** to quit
 
-## 🔨 Build
+## Build
+
+**Windows:**
 
 ```bash
-go build -ldflags="-H windowsgui"
+cd src
+go build -ldflags="-H windowsgui" -o ../dist/clicky.exe
 ```
 
-## 🎨 Design
+**macOS:**
+
+```bash
+cd src
+CC=clang go build -o ../dist/clicky
+```
+
+## Project Structure
+
+```
+src/
+  main.go                  — Entry point
+  app.go                   — Shared logic: Bezier curves, random delay, aliveLoop
+  platform_windows.go      — Win32 GUI + mouse + sleep prevention
+  platform_macos.go        — macOS: Cocoa + CoreGraphics + IOKit (cgo)
+  icon.go                  — Embedded app icon (icon.png)
+  icon.png                 — App icon
+  rsrc_windows_amd64.syso  — Windows resource (embedded icon for .exe)
+  go.mod
+dist/                      — Build output (gitignored)
+```
+
+## Design
 
 ![Design](img.png)
 
@@ -35,10 +61,7 @@ go build -ldflags="-H windowsgui"
 | Text | `#FFFFFF` |
 | Font | Segoe UI, semi-bold |
 
-Icon: blue circle with white center dot (embedded in .exe via `rsrc_windows_amd64.syso`).
+## Requirements
 
-## 📋 Requirements
-
-- Windows 10+
-- Go 1.21+
-- No CGO, no external libraries — pure Win32 API via `syscall`
+- **Windows:** Windows 10+, Go 1.21+, no CGO
+- **macOS:** macOS 10.14+, Go 1.21+, Xcode CLT (for cgo), Accessibility permission for mouse control
