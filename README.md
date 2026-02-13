@@ -41,7 +41,9 @@ src/
   main.go                  — Entry point
   app.go                   — Shared logic: Bezier curves, random delay, aliveLoop
   platform_windows.go      — Win32 GUI + mouse + sleep prevention
-  platform_macos.go        — macOS: Cocoa + CoreGraphics + IOKit (cgo)
+  platform_macos.go        — macOS: Go CGo bridge (calls into objc_darwin)
+  objc_darwin.h            — C header for Objective-C functions
+  objc_darwin.m            — Objective-C implementation (Cocoa + CoreGraphics + IOKit)
   icon.go                  — Embedded app icon (icon.png)
   icon.png                 — App icon
   rsrc_windows_amd64.syso  — Windows resource (embedded icon for .exe)
