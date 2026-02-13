@@ -5,14 +5,23 @@ MACOS_DIR  := $(CONTENTS)/MacOS
 RES_DIR    := $(CONTENTS)/Resources
 ICON_SRC   := src/icon.png
 ICONSET    := dist/icon.iconset
+DMG        := dist/$(APP_NAME).dmg
 
-.PHONY: app windows clean
+.PHONY: app dmg windows clean
 
 app: $(MACOS_DIR)/clicky $(CONTENTS)/Info.plist $(RES_DIR)/icon.icns
 
+dmg: app
+	@rm -f $(DMG)
+	hdiutil create -volname "$(APP_NAME)" -srcfolder $(BUNDLE) -ov -format UDZO $(DMG)
+	rm -rf $(BUNDLE)
+
 $(MACOS_DIR)/clicky: src/*.go src/objc_darwin.m src/objc_darwin.h
 	@mkdir -p $(MACOS_DIR)
-	cd src && CC=clang go build -o ../$(MACOS_DIR)/clicky
+	cd src && CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 CC=clang go build -o ../$(MACOS_DIR)/clicky_arm64
+	cd src && CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 CC=clang go build -o ../$(MACOS_DIR)/clicky_amd64
+	lipo -create -output $(MACOS_DIR)/clicky $(MACOS_DIR)/clicky_arm64 $(MACOS_DIR)/clicky_amd64
+	rm $(MACOS_DIR)/clicky_arm64 $(MACOS_DIR)/clicky_amd64
 
 $(CONTENTS)/Info.plist: src/Info.plist
 	@mkdir -p $(CONTENTS)

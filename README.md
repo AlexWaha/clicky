@@ -13,20 +13,22 @@ Tiny cross-platform utility that keeps your PC/Mac awake by simulating mouse cli
 
 ## Usage
 
-1. Launch **Clicky.app** (macOS) or `clicky.exe` (Windows)
+1. Launch **Clicky** from DMG (macOS) or `clicky.exe` (Windows)
 2. Click the **Alive** button — it turns green (**Active**)
 3. The cursor moves to button corners with random delays, simulating clicks
 4. Click **X** or press **Cmd+Q** / **Ctrl+Q** to quit
 
 ## Build
 
-**macOS** (creates `dist/Clicky.app`):
+Both targets must be built on **macOS** (requires `hdiutil`, `lipo`, `sips`, `iconutil`).
+
+**macOS** (creates `dist/Clicky.dmg`, Universal Binary — Apple Silicon + Intel):
 
 ```bash
-make app
+make dmg
 ```
 
-Drag `dist/Clicky.app` to **Applications** to install.
+Open `dist/Clicky.dmg` and drag **Clicky** to **Applications** to install.
 
 **Windows** (cross-compile from macOS):
 
@@ -37,7 +39,7 @@ make windows
 ## Project Structure
 
 ```
-Makefile                     — Build automation (make app / make windows / make clean)
+Makefile                     — Build automation (make dmg / make windows / make clean)
 src/
   main.go                    — Entry point
   app.go                     — Shared logic: Bezier curves, random delay, aliveLoop
@@ -50,8 +52,8 @@ src/
   Info.plist                 — macOS app bundle metadata
   rsrc_windows_amd64.syso    — Windows resource (embedded icon for .exe)
   go.mod
-dist/                        — Build output (gitignored)
-  Clicky.app/                — macOS app bundle
+dist/                        — Build output
+  Clicky.dmg                 — macOS disk image
 ```
 
 ## Design
@@ -69,7 +71,7 @@ dist/                        — Build output (gitignored)
 ## Requirements
 
 - **Windows:** Windows 10+, Go 1.21+, no CGO
-- **macOS:** macOS 10.14+, Go 1.21+, Xcode CLT (for building)
+- **macOS:** macOS 10.14+, Go 1.21+, Xcode CLT (for building). Universal Binary — Apple Silicon (M1–M4) + Intel
 
 ### macOS Accessibility Permission
 
